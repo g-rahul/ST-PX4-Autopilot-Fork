@@ -1,0 +1,242 @@
+diff --git a/boards/px4/extras/px4_fmu-v5_bootloader.bin b/boards/px4/extras/px4_fmu-v5_bootloader.bin
+deleted file mode 100644
+index f5adff96ee..0000000000
+Binary files a/boards/px4/extras/px4_fmu-v5_bootloader.bin and /dev/null differ
+diff --git a/boards/px4/extras/px4_io-v2_default.bin b/boards/px4/extras/px4_io-v2_default.bin
+deleted file mode 100755
+index 957f0f13a1..0000000000
+Binary files a/boards/px4/extras/px4_io-v2_default.bin and /dev/null differ
+diff --git a/boards/px4/fmu-v5/default.px4board b/boards/px4/fmu-v5/default.px4board
+index 50bcec8408..bfb8b6af46 100644
+--- a/boards/px4/fmu-v5/default.px4board
++++ b/boards/px4/fmu-v5/default.px4board
+@@ -17,12 +17,15 @@ CONFIG_DRIVERS_GPS=y
+ CONFIG_DRIVERS_HEATER=y
+ CONFIG_COMMON_HYGROMETERS=y
+ CONFIG_DRIVERS_IMU_ANALOG_DEVICES_ADIS16448=y
+-CONFIG_DRIVERS_IMU_BOSCH_BMI270=y
+-CONFIG_DRIVERS_IMU_INVENSENSE_ICM42670P=y
++CONFIG_DRIVERS_IMU_BOSCH_BMI055=y
++CONFIG_DRIVERS_IMU_INVENSENSE_ICM20602=y
++CONFIG_DRIVERS_IMU_INVENSENSE_ICM20689=y
++CONFIG_DRIVERS_IMU_INVENSENSE_ICM20948=y
++CONFIG_DRIVERS_IMU_INVENSENSE_ICM42688P=y
+ CONFIG_DRIVERS_IRLOCK=y
+ CONFIG_COMMON_LIGHT=y
+ CONFIG_DRIVERS_LIGHTS_RGBLED_PWM=y
+-CONFIG_DRIVERS_MAGNETOMETER_LIS3MDL=y
++CONFIG_COMMON_MAGNETOMETER=y
+ CONFIG_COMMON_OPTICAL_FLOW=y
+ CONFIG_COMMON_OSD=y
+ CONFIG_DRIVERS_PCA9685_PWM_OUT=y
+diff --git a/boards/px4/fmu-v5/extras/f1rcc.patch b/boards/px4/fmu-v5/extras/f1rcc.patch
+deleted file mode 100644
+index 8500510d5e..0000000000
+--- a/boards/px4/fmu-v5/extras/f1rcc.patch
++++ /dev/null
+@@ -1,28 +0,0 @@
+-diff --git a/arch/arm/src/stm32/stm32f10xxx_rcc.c b/arch/arm/src/stm32/stm32f10xxx_rcc.c
+-index bd89aa0e57..7cc5f9991e 100644
+---- a/arch/arm/src/stm32/stm32f10xxx_rcc.c
+-+++ b/arch/arm/src/stm32/stm32f10xxx_rcc.c
+-@@ -524,7 +524,11 @@ static void stm32_stdclockconfig(void)
+-   /* Enable HSE */
+- 
+-   regval  = getreg32(STM32_RCC_CR);
+-+#ifdef STM32_HSEBYP_ENABLE          /* May be defined in board.h header file */
+-+  regval |= RCC_CR_HSEBYP;          /* Enable HSE clock bypass */
+-+#else
+-   regval &= ~RCC_CR_HSEBYP;         /* Disable HSE clock bypass */
+-+#endif
+-   regval |= RCC_CR_HSEON;           /* Enable HSE */
+-   putreg32(regval, STM32_RCC_CR);
+- 
+-@@ -640,7 +644,11 @@ static void stm32_stdclockconfig(void)
+-       /* Enable External High-Speed Clock (HSE) */
+- 
+-       regval  = getreg32(STM32_RCC_CR);
+-+#ifdef STM32_HSEBYP_ENABLE          /* May be defined in board.h header file */
+-+      regval |= RCC_CR_HSEBYP;          /* Enable HSE clock bypass */
+-+#else
+-       regval &= ~RCC_CR_HSEBYP;         /* Disable HSE clock bypass */
+-+#endif
+-       regval |= RCC_CR_HSEON;           /* Enable HSE */
+-       putreg32(regval, STM32_RCC_CR);
+- 
+diff --git a/boards/px4/fmu-v5/extras/px4_fmu-v5_bootloader.bin b/boards/px4/fmu-v5/extras/px4_fmu-v5_bootloader.bin
+old mode 100755
+new mode 100644
+index abaca4f026..f5adff96ee
+Binary files a/boards/px4/fmu-v5/extras/px4_fmu-v5_bootloader.bin and b/boards/px4/fmu-v5/extras/px4_fmu-v5_bootloader.bin differ
+diff --git a/boards/px4/fmu-v5/extras/px4_io-v2_default.bin b/boards/px4/fmu-v5/extras/px4_io-v2_default.bin
+index 23935bfa11..957f0f13a1 100755
+Binary files a/boards/px4/fmu-v5/extras/px4_io-v2_default.bin and b/boards/px4/fmu-v5/extras/px4_io-v2_default.bin differ
+diff --git a/boards/px4/fmu-v5/init/rc.board_sensors b/boards/px4/fmu-v5/init/rc.board_sensors
+index a99c986650..b3d53a4934 100644
+--- a/boards/px4/fmu-v5/init/rc.board_sensors
++++ b/boards/px4/fmu-v5/init/rc.board_sensors
+@@ -11,23 +11,21 @@ then
+ 	icm42688p -s -R 2 -q start
+ else
+ 	# Internal SPI bus ICM-20602
+-	icm42670p -s -R 2 -q start
++	icm20602 -s -R 2 -q start
+ fi
+ 
+ # Internal SPI bus ICM-20689
+-#icm20689 -s -R 2 start
++icm20689 -s -R 2 start
+ 
+ # Internal SPI bus BMI055 accel/gyro
+-bmi270 -s -R 2 -q start
+-#bmi055 -A -R 2 -s start
+-#bmi055 -G -R 2 -s start
++bmi055 -A -R 2 -s start
++bmi055 -G -R 2 -s start
+ 
+ # Baro on internal SPI
+ ms5611 -s start
+ 
+ # internal compass
+-#ist8310 -I -R 10 start
+-lis3mdl -I -R 10 start
++ist8310 -I -R 10 start
+ 
+ # External compass on GPS1/I2C1 (the 3rd external bus): standard Holybro Pixhawk 4 or CUAV V5 GPS/compass puck (with lights, safety button, and buzzer)
+-#ist8310 -X -b 1 -R 10 start
++ist8310 -X -b 1 -R 10 start
+diff --git a/boards/px4/fmu-v5/nuttx-config/include/board.h b/boards/px4/fmu-v5/nuttx-config/include/board.h
+index 0de11e0b4b..de1fb2099d 100644
+--- a/boards/px4/fmu-v5/nuttx-config/include/board.h
++++ b/boards/px4/fmu-v5/nuttx-config/include/board.h
+@@ -70,7 +70,7 @@
+ #define STM32_LSI_FREQUENCY     32000
+ #define STM32_HSE_FREQUENCY     STM32_BOARD_XTAL
+ #define STM32_LSE_FREQUENCY     0
+-#define STM32_HSEBYP_ENABLE     1
++
+ /* Main PLL Configuration.
+  *
+  * PLL source is HSE = 16,000,000
+@@ -360,28 +360,25 @@
+  *
+  */
+ 
+-/* SPI */
+-#define SPI_ADJ_SLEW_RATE(p) (((p) & ~GPIO_SPEED_MASK) | (GPIO_SPEED_2MHz))
+-
+ #define GPIO_SPI1_MISO   GPIO_SPI1_MISO_1   /* PA6 */
+-#define GPIO_SPI1_MOSI   SPI_ADJ_SLEW_RATE(GPIO_SPI1_MOSI_3)   /* PD7 */
+-#define GPIO_SPI1_SCK    SPI_ADJ_SLEW_RATE(GPIO_SPI1_SCK_3)    /* PG11 */
++#define GPIO_SPI1_MOSI   GPIO_SPI1_MOSI_3   /* PD7 */
++#define GPIO_SPI1_SCK    GPIO_SPI1_SCK_3    /* PG11 */
+ 
+ #define GPIO_SPI2_MISO   GPIO_SPI2_MISO_3   /* PI2 */
+-#define GPIO_SPI2_MOSI   SPI_ADJ_SLEW_RATE(GPIO_SPI2_MOSI_3)   /* PI3 */
+-#define GPIO_SPI2_SCK    SPI_ADJ_SLEW_RATE(GPIO_SPI2_SCK_5)    /* PI1 */
++#define GPIO_SPI2_MOSI   GPIO_SPI2_MOSI_3   /* PI3 */
++#define GPIO_SPI2_SCK    GPIO_SPI2_SCK_5    /* PI1 */
+ 
+ #define GPIO_SPI4_MISO   GPIO_SPI4_MISO_2   /* PE13 */
+-#define GPIO_SPI4_MOSI   SPI_ADJ_SLEW_RATE(GPIO_SPI4_MOSI_1)   /* PE6 */
+-#define GPIO_SPI4_SCK    SPI_ADJ_SLEW_RATE(GPIO_SPI4_SCK_1)    /* PE2 */
++#define GPIO_SPI4_MOSI   GPIO_SPI4_MOSI_1   /* PE6 */
++#define GPIO_SPI4_SCK    GPIO_SPI4_SCK_1    /* PE2 */
+ 
+ #define GPIO_SPI5_MISO   GPIO_SPI5_MISO_1   /* PF8 */
+-#define GPIO_SPI5_MOSI   SPI_ADJ_SLEW_RATE(GPIO_SPI5_MOSI_1)   /* PF9 */
+-#define GPIO_SPI5_SCK    SPI_ADJ_SLEW_RATE(GPIO_SPI5_SCK_1)    /* PF7 */
++#define GPIO_SPI5_MOSI   GPIO_SPI5_MOSI_1   /* PF9 */
++#define GPIO_SPI5_SCK    GPIO_SPI5_SCK_1    /* PF7 */
+ 
+ #define GPIO_SPI6_MISO   GPIO_SPI6_MISO_1   /* PG12 */
+-#define GPIO_SPI6_MOSI   SPI_ADJ_SLEW_RATE(GPIO_SPI6_MOSI_3)   /* PB5 */
+-#define GPIO_SPI6_SCK    SPI_ADJ_SLEW_RATE(GPIO_SPI6_SCK_1)    /* PG13 */
++#define GPIO_SPI6_MOSI   GPIO_SPI6_MOSI_3   /* PB5 */
++#define GPIO_SPI6_SCK    GPIO_SPI6_SCK_1    /* PG13 */
+ 
+ /* I2C
+  *
+@@ -397,16 +394,14 @@
+  *
+  */
+ 
+-#define I2C_ADJ_SLEW_RATE(p) (((p) & ~GPIO_SPEED_MASK) | (GPIO_SPEED_2MHz))
+-
+ #define GPIO_I2C1_SCL GPIO_I2C1_SCL_2       /* PB8]  */
+ #define GPIO_I2C1_SDA GPIO_I2C1_SDA_2       /* PB9  */
+ 
+ #define GPIO_I2C2_SCL GPIO_I2C2_SCL_2       /* PF1 */
+ #define GPIO_I2C2_SDA GPIO_I2C2_SDA_2       /* PF0 */
+ 
+-#define GPIO_I2C3_SCL I2C_ADJ_SLEW_RATE(GPIO_I2C3_SCL_2)   /* PH7 */
+-#define GPIO_I2C3_SDA I2C_ADJ_SLEW_RATE(GPIO_I2C3_SDA_2)   /* PH8 */
++#define GPIO_I2C3_SCL GPIO_I2C3_SCL_2       /* PH7 */
++#define GPIO_I2C3_SDA GPIO_I2C3_SDA_2       /* PH8 */
+ 
+ #define GPIO_I2C4_SCL GPIO_I2C4_SCL_2       /* PF14 */
+ #define GPIO_I2C4_SDA GPIO_I2C4_SDA_2       /* PF15 */
+diff --git a/boards/px4/fmu-v5/src/board_config.h b/boards/px4/fmu-v5/src/board_config.h
+index 41589bcf17..8246664dec 100644
+--- a/boards/px4/fmu-v5/src/board_config.h
++++ b/boards/px4/fmu-v5/src/board_config.h
+@@ -58,15 +58,8 @@
+ 
+ #define BOARD_USES_PX4IO_VERSION       2
+ #define PX4IO_SERIAL_DEVICE            "/dev/ttyS6"
+-//#define PX4IO_SERIAL_TX_GPIO           GPIO_UART8_TX
+-//#define PX4IO_SERIAL_RX_GPIO           GPIO_UART8_RX
+-
+-#define GPIO_ADJ_SLEW_RATE(p) (((p) & ~GPIO_SPEED_MASK) | (GPIO_SPEED_2MHz))
+-
+-#define PX4IO_SERIAL_TX_GPIO           GPIO_ADJ_SLEW_RATE(GPIO_UART8_TX)
+-#define PX4IO_SERIAL_RX_GPIO           GPIO_ADJ_SLEW_RATE(GPIO_UART8_RX)
+-
+-
++#define PX4IO_SERIAL_TX_GPIO           GPIO_UART8_TX
++#define PX4IO_SERIAL_RX_GPIO           GPIO_UART8_RX
+ #define PX4IO_SERIAL_BASE              STM32_UART8_BASE
+ #define PX4IO_SERIAL_VECTOR            STM32_IRQ_UART8
+ #define PX4IO_SERIAL_TX_DMAMAP         DMAMAP_UART8_TX
+diff --git a/boards/px4/fmu-v5/src/spi.cpp b/boards/px4/fmu-v5/src/spi.cpp
+index f133e3effb..8a3f8c9b29 100644
+--- a/boards/px4/fmu-v5/src/spi.cpp
++++ b/boards/px4/fmu-v5/src/spi.cpp
+@@ -38,8 +38,10 @@
+ constexpr px4_spi_bus_all_hw_t px4_spi_buses_all_hw[BOARD_NUM_SPI_CFG_HW_VERSIONS] = {
+ 	initSPIHWVersion(V500, {
+ 		initSPIBus(SPI::Bus::SPI1, {
+-			initSPIDevice(DRV_IMU_DEVTYPE_ICM42670P, SPI::CS{GPIO::PortF, GPIO::Pin2}, SPI::DRDY{GPIO::PortB, GPIO::Pin4}),
+-			initSPIDevice(DRV_IMU_DEVTYPE_BMI270, SPI::CS{GPIO::PortF, GPIO::Pin4}, SPI::DRDY{GPIO::PortB, GPIO::Pin14}),
++			initSPIDevice(DRV_IMU_DEVTYPE_ICM20689, SPI::CS{GPIO::PortF, GPIO::Pin2}, SPI::DRDY{GPIO::PortB, GPIO::Pin4}),
++			initSPIDevice(DRV_IMU_DEVTYPE_ICM20602, SPI::CS{GPIO::PortF, GPIO::Pin3}, SPI::DRDY{GPIO::PortC, GPIO::Pin5}),
++			initSPIDevice(DRV_GYR_DEVTYPE_BMI055, SPI::CS{GPIO::PortF, GPIO::Pin4}, SPI::DRDY{GPIO::PortB, GPIO::Pin14}),
++			initSPIDevice(DRV_ACC_DEVTYPE_BMI055, SPI::CS{GPIO::PortG, GPIO::Pin10}, SPI::DRDY{GPIO::PortB, GPIO::Pin15}),
+ 		}, {GPIO::PortE, GPIO::Pin3}),
+ 		initSPIBus(SPI::Bus::SPI2, {
+ 			initSPIDevice(SPIDEV_FLASH(0), SPI::CS{GPIO::PortF, GPIO::Pin5})
+diff --git a/boards/px4/io-v2/nuttx-config/include/board.h b/boards/px4/io-v2/nuttx-config/include/board.h
+index 4b49ec4c4b..577e02dfe3 100644
+--- a/boards/px4/io-v2/nuttx-config/include/board.h
++++ b/boards/px4/io-v2/nuttx-config/include/board.h
+@@ -57,7 +57,7 @@
+ /* On-board crystal frequency is 24MHz (HSE) */
+ 
+ #define STM32_BOARD_XTAL        24000000ul
+-#define STM32_HSEBYP_ENABLE     1
++
+ /* Use the HSE output as the system clock */
+ 
+ #define STM32_SYSCLK_SW         RCC_CFGR_SW_HSE
+diff --git a/boards/px4/io-v2/nuttx-config/nsh/defconfig b/boards/px4/io-v2/nuttx-config/nsh/defconfig
+index af4e150506..79f11edcea 100644
+--- a/boards/px4/io-v2/nuttx-config/nsh/defconfig
++++ b/boards/px4/io-v2/nuttx-config/nsh/defconfig
+@@ -19,7 +19,6 @@ CONFIG_ARM_MPU_EARLY_RESET=y
+ CONFIG_BOARD_LOOPSPERMSEC=2000
+ CONFIG_DEBUG_FULLOPT=y
+ CONFIG_DEBUG_SYMBOLS=y
+-CONFIG_DEBUG_TCBINFO=y
+ CONFIG_DEFAULT_SMALL=y
+ CONFIG_DISABLE_MOUNTPOINT=y
+ CONFIG_FDCLONE_DISABLE=y
