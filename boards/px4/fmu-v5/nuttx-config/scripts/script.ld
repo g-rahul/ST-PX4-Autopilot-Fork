@@ -94,7 +94,7 @@ EXTERN(_main_toc)
 
 SECTIONS
 {
-	.text : {
+	.text : ALIGN_WITH_INPUT {
 		_stext = ABSOLUTE(.);
 		*(.vectors)
 		. = ALIGN(32);
@@ -117,31 +117,31 @@ SECTIONS
 		*(.gnu.linkonce.r.*)
 		_etext = ABSOLUTE(.);
 
-	} > FLASH_AXIM
+	} > FLASH_ITCM AT > FLASH_AXIM
 
 	/*
 	 * Init functions (static constructors and the like)
 	 */
-	.init_section : {
+	.init_section : ALIGN_WITH_INPUT {
 		_sinit = ABSOLUTE(.);
 		KEEP(*(.init_array .init_array.*))
 		_einit = ABSOLUTE(.);
-	} > FLASH_AXIM
+	} > FLASH_ITCM AT > FLASH_AXIM
 
 
-	.ARM.extab : {
+	.ARM.extab : ALIGN_WITH_INPUT {
 		*(.ARM.extab*)
-	} > FLASH_AXIM
+	} > FLASH_ITCM AT > FLASH_AXIM
 
 	__exidx_start = ABSOLUTE(.);
 	.ARM.exidx : {
 		*(.ARM.exidx*)
-	} > FLASH_AXIM
+	} > FLASH_ITCM AT > FLASH_AXIM
 	__exidx_end = ABSOLUTE(.);
 
 	_eronly = ABSOLUTE(.);
 
-	.data : {
+	.data : ALIGN_WITH_INPUT {
 		_sdata = ABSOLUTE(.);
 		*(.data .data.*)
 		*(.gnu.linkonce.d.*)
@@ -186,5 +186,5 @@ SECTIONS
      */
 	.signature : {
 		_boot_signature = ALIGN(4);
-	} > FLASH_AXIM
+	} > FLASH_ITCM AT > FLASH_AXIM
 }
