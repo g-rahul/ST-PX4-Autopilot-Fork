@@ -40,6 +40,7 @@ constexpr px4_spi_bus_all_hw_t px4_spi_buses_all_hw[BOARD_NUM_SPI_CFG_HW_VERSION
 		initSPIBus(SPI::Bus::SPI1, {
 			initSPIDevice(DRV_IMU_DEVTYPE_ICM42670P, SPI::CS{GPIO::PortF, GPIO::Pin2}, SPI::DRDY{GPIO::PortB, GPIO::Pin4}),
 			initSPIDevice(DRV_IMU_DEVTYPE_BMI270, SPI::CS{GPIO::PortF, GPIO::Pin4}, SPI::DRDY{GPIO::PortB, GPIO::Pin14}),
+			initSPIDevice(DRV_IMU_DEVTYPE_ST_LSM6DSL, SPI::CS{GPIO::PortF, GPIO::Pin3}, SPI::DRDY{GPIO::PortC, GPIO::Pin5}),
 		}, {GPIO::PortE, GPIO::Pin3}),
 		initSPIBus(SPI::Bus::SPI2, {
 			initSPIDevice(SPIDEV_FLASH(0), SPI::CS{GPIO::PortF, GPIO::Pin5})
