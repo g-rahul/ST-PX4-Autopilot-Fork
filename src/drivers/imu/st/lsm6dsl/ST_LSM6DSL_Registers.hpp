@@ -51,6 +51,10 @@ static constexpr uint8_t Bit4 = (1 << 4);
 static constexpr uint8_t Bit5 = (1 << 5);
 static constexpr uint8_t Bit6 = (1 << 6);
 static constexpr uint8_t Bit7 = (1 << 7);
+static constexpr uint16_t Bit8 = (1 << 8);
+static constexpr uint16_t Bit9 = (1 << 9);
+static constexpr uint16_t Bit10 = (1 << 10);
+
 
 namespace ST_LSM6DSL
 {
@@ -63,6 +67,8 @@ static constexpr uint8_t WHO_AM_I_ID = 0b01101010; // Who I am ID
 
 static constexpr uint32_t LA_ODR = 6664; // Linear acceleration output data rate
 static constexpr uint32_t G_ODR  = 6664; // Angular rate output data rate
+//static constexpr uint32_t LA_ODR = 833; // Linear acceleration output data rate
+//static constexpr uint32_t G_ODR  = 833; // Angular rate output data rate
 
 enum class Register : uint8_t {
 	WHO_AM_I        = 0x0F, /* Who_AM_I register (r). This register is a read-only register. */
@@ -131,9 +137,10 @@ enum class Register : uint8_t {
 enum CTRL2_G_BIT : uint8_t {
         //ODR_G [3:0]
 	ODR_G_6660HZ  = Bit7 | Bit5, // 6660 Hz ODR
+	//ODR_G_6660HZ  = Bit7 | Bit6 | Bit5, // 833 Hz ODR
 	// FS_G [1:0]
 	FS_G_2000DPS = Bit3 | Bit2,
-        FS_125 = Bit1, //At Bit1 Full Scale at 125dps
+        //FS_125 = Bit1, //At Bit1 Full Scale at 125dps
 };
 //enum CTRL1_REG1_G_BIT : uint8_t {
 //	// ODR_G [2:0]
@@ -155,10 +162,12 @@ enum STATUS_REG_BIT : uint8_t {
 enum CTRL1_XL_BIT : uint8_t {
         // ODR_XL [3:0]
 	ODR_XL_6660HZ  = Bit7 | Bit5, // 6660 Hz ODR
+	//ODR_XL_6660HZ  = Bit6 | Bit5 | Bit4, // 833 Hz ODR
         //FS_XL [1:0]
-	FS_XL = Bit3, // FS_XL 01: _16 g
-        LPF1_BW_SEL = Bit1,
+	FS_XL = Bit2, // FS_XL 01: _16 g
+        //LPF1_BW_SEL = Bit1,
 	BW0_XL_400Hz   = Bit0, // BW0_XL 400 Hz
+	//BW0_XL_400Hz   = 0, // BW0_XL 400 Hz
 };
 
 //enum CTRL_REG6_XL_BIT : uint8_t {
@@ -191,19 +200,33 @@ enum CTRL4_C_BIT : uint8_t {
 // FIFO_CTRL
 enum FIFO_CTRL5_BIT : uint8_t {
 	// FMODE [2:0]
+	FIFO_ODR = Bit6 | Bit4, //6664 Hz
+	//FIFO_ODR = Bit5 | Bit4 | Bit3 , // 833 hz
 	FMODE_CONTINUOUS = Bit2 | Bit1, // Continuous mode. If the FIFO is full, the new sample over- writes the older sample.
 };
 
+enum FIFO_CTRL3_BIT : uint8_t {
+	// FMODE [2:0]
+	DEC_FIFO_XL = Bit0,
+	DEC_FIFO_G  = Bit3,
+};
 // FIFO_SRC
 enum FIFO_STATUS2_BIT : uint8_t {
 	OVRN = Bit6, // FIFO overrun status.
 	DIFF_FIFO  = Bit2 | Bit1 | Bit0,
 };
 
+enum FIFO_STATUS1_BIT : uint8_t {
+	DIFF_FIFO1  = Bit7 | Bit6 | Bit5 | Bit4 | Bit3 | Bit2 | Bit1 | Bit0,
+};
 
 namespace FIFO
 {
-static constexpr size_t SIZE = 32 * 12; // 32 samples max
+//static constexpr size_t SIZE = 32 * 12; // 32 samples max
+//static constexpr size_t SIZE = 512 * 12; // 32 samples max
+//static constexpr size_t SIZE = 4096; // 4096 samples max
+static constexpr size_t SIZE = 2048 * 12; // 4096 samples max
+//static constexpr size_t SIZE = 4096 * 12; // 4096 samples max
 }
 
 } // namespace ST_LSM6DSL

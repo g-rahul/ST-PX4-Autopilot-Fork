@@ -11,15 +11,15 @@ then
 	icm42688p -s -R 2 -q start
 else
 	# Internal SPI bus ICM-20602
-	icm42670p -s -R 2 -q start
+	##icm42670p -s -R 2 -q start
 fi
 
 # Internal SPI bus ICM-20689
 #icm20689 -s -R 2 start
 
-lsm6dsl -s start 
+lsm6dsl -s -R 2 start 
 # Internal SPI bus BMI055 accel/gyro
-bmi270 -s -R 2 -q start
+##bmi270 -s -R 2 -q start
 #bmi055 -A -R 2 -s start
 #bmi055 -G -R 2 -s start
 

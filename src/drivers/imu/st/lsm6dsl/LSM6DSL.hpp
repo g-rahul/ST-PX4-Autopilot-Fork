@@ -75,7 +75,8 @@ private:
 
 	// maximum FIFO samples per transfer is limited to the size of sensor_accel_fifo/sensor_gyro_fifo
 	static constexpr int32_t FIFO_MAX_SAMPLES{math::min(math::min(FIFO::SIZE / 12, sizeof(sensor_gyro_fifo_s::x) / sizeof(sensor_gyro_fifo_s::x[0])), sizeof(sensor_accel_fifo_s::x) / sizeof(sensor_accel_fifo_s::x[0]) * (int)(GYRO_RATE / ACCEL_RATE))};
-
+	//PX4_INFO ("FIFO Size: %d %d ", FIFO::SIZE / 16, sizeof(sensor_gyro_fifo_s::x) / sizeof(sensor_gyro_fifo_s::x[0]) ) ;
+	//PX4_INFO ("FIFO Size: %d %d ", FIFO::SIZE / 16, sizeof(sensor_accel_fifo_s::x) / sizeof(sensor_accel_fifo_s::x[0]) ) ;
 	struct register_config_t {
 		Register reg;
 		uint8_t set_bits{0};
@@ -96,7 +97,7 @@ private:
 	void RegisterSetAndClearBits(Register reg, uint8_t setbits, uint8_t clearbits);
 
 	uint16_t FIFOReadCount();
-	bool FIFORead(const hrt_abstime &timestamp_sample, uint8_t samples);
+	bool FIFORead(const hrt_abstime &timestamp_sample, uint16_t samples);
 	void FIFOReset();
 
 	void UpdateTemperature();
@@ -122,18 +123,23 @@ private:
 		FIFO_READ,
 	} _state{STATE::RESET};
 
-	uint16_t _fifo_empty_interval_us{1250}; // default 1250 us / 800 Hz transfer interval
+	uint16_t _fifo_empty_interval_us{1200}; // default 1250 us / 833 Hz transfer interval
+	//uint16_t _fifo_empty_interval_us = 150 ; // default 150 us / 6664 Hz transfer interval
 	int32_t _fifo_gyro_samples{static_cast<int32_t>(_fifo_empty_interval_us / (1000000 / GYRO_RATE))};
 
 	uint8_t _checked_register{0};
+	uint16_t _samples{0};
 	static constexpr uint8_t size_register_cfg{6};
 	register_config_t _register_cfg[size_register_cfg] {
 		// Register               | Set bits, Clear bits
-		{ Register::CTRL2_G,  CTRL2_G_BIT::ODR_G_6660HZ | CTRL2_G_BIT::FS_G_2000DPS | CTRL2_G_BIT::FS_125, 0 },
-		{ Register::CTRL1_XL, CTRL1_XL_BIT::ODR_XL_6660HZ | CTRL1_XL_BIT::FS_XL | CTRL1_XL_BIT::LPF1_BW_SEL | CTRL1_XL_BIT::BW0_XL_400Hz, 0 },
+		//{ Register::CTRL2_G,  CTRL2_G_BIT::ODR_G_6660HZ | CTRL2_G_BIT::FS_G_2000DPS | CTRL2_G_BIT::FS_125, 0 },
+		{ Register::CTRL2_G,  CTRL2_G_BIT::ODR_G_6660HZ | CTRL2_G_BIT::FS_G_2000DPS , 0 },
+		//{ Register::CTRL1_XL, CTRL1_XL_BIT::ODR_XL_6660HZ | CTRL1_XL_BIT::FS_XL | CTRL1_XL_BIT::LPF1_BW_SEL | CTRL1_XL_BIT::BW0_XL_400Hz, 0 },
+		{ Register::CTRL1_XL, CTRL1_XL_BIT::ODR_XL_6660HZ | CTRL1_XL_BIT::FS_XL | CTRL1_XL_BIT::BW0_XL_400Hz, 0 },
 		//{ Register::CTRL_REG7_XL, CTRL_REG7_XL_BIT::HR, CTRL_REG7_XL_BIT::FDS },
 		{ Register::CTRL3_C,    CTRL3_C_BIT::BDU | CTRL3_C_BIT::IF_ADD_INC, CTRL3_C_BIT::SW_RESET },
 		{ Register::CTRL4_C,    CTRL4_C_BIT::I2C_DISABLE, 0 },
-		{ Register::FIFO_CTRL5,    FIFO_CTRL5_BIT::FMODE_CONTINUOUS, 0 },
+		{ Register::FIFO_CTRL5,    FIFO_CTRL5_BIT::FIFO_ODR | FIFO_CTRL5_BIT::FMODE_CONTINUOUS, 0 },
+		{ Register::FIFO_CTRL3,    FIFO_CTRL3_BIT::DEC_FIFO_XL|FIFO_CTRL3_BIT::DEC_FIFO_G, 0 },
 	};
 };

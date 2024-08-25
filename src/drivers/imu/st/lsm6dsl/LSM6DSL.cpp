@@ -86,7 +86,16 @@ void LSM6DSL::exit_and_cleanup()
 void LSM6DSL::print_status()
 {
 	I2CSPIDriverBase::print_status();
+	//_fifo_empty_interval_us = 150 ;
+	//PX4_INFO("FIFO empty interval: %d us (%.1f Hz)", _fifo_empty_interval_us/10 , 1e6 / _fifo_empty_interval_us);
+	
+	PX4_INFO("FIFO gyroMax Hz  %ld %ld ", _px4_gyro.get_max_rate_hz(), _px4_accel.get_max_rate_hz());
+	PX4_INFO("FIFO Max SAMPLE  %ld ", FIFO_MAX_SAMPLES);
+	PX4_INFO("FIFO Gyro SAMPLE  %ld ",  _fifo_gyro_samples);
+	PX4_INFO("FIFO total SAMPLE  %d ",  _samples);
 
+	//PX4_INFO("FIFO SAMPLE DT  %f ",  FIFO_SAMPLE_DT );
+	
 	PX4_INFO("FIFO empty interval: %d us (%.1f Hz)", _fifo_empty_interval_us, 1e6 / _fifo_empty_interval_us);
 
 	perf_print_counter(_bad_register_perf);
@@ -175,31 +184,39 @@ void LSM6DSL::RunImpl()
 			// always check current FIFO count
 			bool success = false;
 			// Number of unread words (16-bit axes) stored in FIFO.
+			const uint8_t FIFO_STATUS1 = RegisterRead(Register::FIFO_STATUS1);
+			uint8_t samples1 = FIFO_STATUS1 & static_cast<uint8_t>(FIFO_STATUS1_BIT::DIFF_FIFO1);
+			//PX4_INFO("FIFO Smaple 1: %d ", samples );
 			const uint8_t FIFO_STATUS2 = RegisterRead(Register::FIFO_STATUS2);
-			uint8_t samples = FIFO_STATUS2 & static_cast<uint8_t>(FIFO_STATUS2_BIT::DIFF_FIFO);
+			uint8_t samples2 = (FIFO_STATUS2 & static_cast<uint8_t>(FIFO_STATUS2_BIT::DIFF_FIFO));
+			uint16_t samples16{0} ;
+			samples16 =  ((uint16_t) samples2 << 8) + ((uint16_t) samples1) ;
+
+			PX4_INFO("FIFO Smaple 2: %d ", samples16 );
+			_samples = samples16 ;
 
 			if (FIFO_STATUS2 & FIFO_STATUS2_BIT::OVRN) {
 				// overflow
 				FIFOReset();
 				perf_count(_fifo_overflow_perf);
 
-			} else if (samples == 0) {
+			} else if (samples16 == 0) {
 				perf_count(_fifo_empty_perf);
 
 			} else {
 				// tolerate minor jitter, leave sample to next iteration if behind by only 1
-				if (samples == _fifo_gyro_samples + 1) {
+				if (samples16 == _fifo_gyro_samples + 1) {
 					timestamp_sample -= static_cast<int>(FIFO_SAMPLE_DT);
-					samples--;
+					samples16--;
 				}
 
-				if (samples > FIFO_MAX_SAMPLES) {
+				if (samples16 > FIFO_MAX_SAMPLES) {
 					// not technically an overflow, but more samples than we expected or can publish
 					FIFOReset();
 					perf_count(_fifo_overflow_perf);
 
-				} else if (samples >= 1) {
-					if (FIFORead(timestamp_sample, samples)) {
+				} else if (samples16 >= 1) {
+					if (FIFORead(timestamp_sample, samples16)) {
 						success = true;
 
 						if (_failure_count > 0) {
@@ -277,7 +294,7 @@ bool LSM6DSL::Configure()
 	_px4_gyro.set_range(math::radians(2000.f));
 
 	// Accelerometer configuration 16 G range
-	_px4_accel.set_scale(0.732f * (CONSTANTS_ONE_G / 1000.f)); // 0.732 mg/LSB
+	_px4_accel.set_scale(0.488f * (CONSTANTS_ONE_G / 1000.f)); // 0.488 mg/LSB
 	_px4_accel.set_range(16.f * CONSTANTS_ONE_G);
 
 	return success;
@@ -327,7 +344,7 @@ void LSM6DSL::RegisterSetAndClearBits(Register reg, uint8_t setbits, uint8_t cle
 	}
 }
 
-bool LSM6DSL::FIFORead(const hrt_abstime &timestamp_sample, uint8_t samples)
+bool LSM6DSL::FIFORead(const hrt_abstime &timestamp_sample, uint16_t samples)
 {
 	sensor_gyro_fifo_s gyro{};
 	gyro.timestamp_sample = timestamp_sample;
